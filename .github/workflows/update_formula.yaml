@@ -1,0 +1,116 @@
+name: Update Formula
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check for new release
+        id: check
+        run: |
+          REPO="ArmisSecurity/armis-cli"
+          FORMULA_FILE="Formula/armis-cli.rb"
+          
+          echo "Fetching latest release from $REPO..."
+          LATEST_RELEASE=$(curl -s "https://api.github.com/repos/$REPO/releases/latest")
+          LATEST_VERSION=$(echo "$LATEST_RELEASE" | jq -r '.tag_name' | sed 's/^v//')
+          
+          echo "Latest version: $LATEST_VERSION"
+          echo "latest_version=$LATEST_VERSION" >> $GITHUB_OUTPUT
+          
+          CURRENT_VERSION=$(grep 'version "' "$FORMULA_FILE" | sed 's/.*version "\(.*\)".*/\1/')
+          echo "Current version in formula: $CURRENT_VERSION"
+          echo "current_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          
+          if [ "$LATEST_VERSION" = "$CURRENT_VERSION" ]; then
+            echo "Formula is already up to date!"
+            echo "needs_update=false" >> $GITHUB_OUTPUT
+          else
+            echo "New version detected: $LATEST_VERSION"
+            echo "needs_update=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Update formula
+        if: steps.check.outputs.needs_update == 'true'
+        run: |
+          REPO="ArmisSecurity/armis-cli"
+          FORMULA_FILE="Formula/armis-cli.rb"
+          LATEST_VERSION="${{ steps.check.outputs.latest_version }}"
+          
+          echo "Downloading checksums..."
+          CHECKSUMS_URL="https://github.com/$REPO/releases/download/v$LATEST_VERSION/armis-cli-checksums.txt"
+          CHECKSUMS=$(curl -sL "$CHECKSUMS_URL")
+          
+          # Extract SHA256 for each platform (exclude .sbom files)
+          DARWIN_AMD64_SHA=$(echo "$CHECKSUMS" | grep "armis-cli-darwin-amd64.tar.gz$" | awk '{print $1}')
+          DARWIN_ARM64_SHA=$(echo "$CHECKSUMS" | grep "armis-cli-darwin-arm64.tar.gz$" | awk '{print $1}')
+          LINUX_AMD64_SHA=$(echo "$CHECKSUMS" | grep "armis-cli-linux-amd64.tar.gz$" | awk '{print $1}')
+          LINUX_ARM64_SHA=$(echo "$CHECKSUMS" | grep "armis-cli-linux-arm64.tar.gz$" | awk '{print $1}')
+          
+          echo "SHA256 hashes extracted successfully"
+          
+          # Verify all hashes were found
+          if [ -z "$DARWIN_AMD64_SHA" ] || [ -z "$DARWIN_ARM64_SHA" ] || [ -z "$LINUX_AMD64_SHA" ] || [ -z "$LINUX_ARM64_SHA" ]; then
+            echo "Error: Failed to extract all SHA256 hashes"
+            exit 1
+          fi
+          
+          # Create updated formula
+          cat > "$FORMULA_FILE" << EOF
+          class ArmisCli < Formula
+            desc "Enterprise-grade CLI tool for static application security scanning"
+            homepage "https://github.com/ArmisSecurity/armis-cli"
+            version "$LATEST_VERSION"
+            license "Apache-2.0"
+          
+            on_macos do
+              on_intel do
+                url "https://github.com/$REPO/releases/download/v$LATEST_VERSION/armis-cli-darwin-amd64.tar.gz"
+                sha256 "$DARWIN_AMD64_SHA"
+              end
+          
+              on_arm do
+                url "https://github.com/$REPO/releases/download/v$LATEST_VERSION/armis-cli-darwin-arm64.tar.gz"
+                sha256 "$DARWIN_ARM64_SHA"
+              end
+            end
+          
+            on_linux do
+              on_intel do
+                url "https://github.com/$REPO/releases/download/v$LATEST_VERSION/armis-cli-linux-amd64.tar.gz"
+                sha256 "$LINUX_AMD64_SHA"
+              end
+          
+              on_arm do
+                url "https://github.com/$REPO/releases/download/v$LATEST_VERSION/armis-cli-linux-arm64.tar.gz"
+                sha256 "$LINUX_ARM64_SHA"
+              end
+            end
+          
+            def install
+              bin.install "armis-cli"
+            end
+          
+            test do
+              system bin/"armis-cli", "version"
+            end
+          end
+          EOF
+          
+          echo "Formula updated successfully to version $LATEST_VERSION"
+
+      - name: Commit and push
+        if: steps.check.outputs.needs_update == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Formula/armis-cli.rb
+          git commit -m "chore: update armis-cli to v${{ steps.check.outputs.latest_version }}"
+          git push
