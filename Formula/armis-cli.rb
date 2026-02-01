@@ -1,30 +1,30 @@
 class ArmisCli < Formula
   desc "Enterprise-grade CLI tool for static application security scanning"
   homepage "https://github.com/ArmisSecurity/armis-cli"
-  version "1.0.5"
+  version "1.0.6"
   license "Apache-2.0"
 
   on_macos do
     on_intel do
-      url "https://github.com/ArmisSecurity/armis-cli/releases/download/v1.0.5/armis-cli-darwin-amd64.tar.gz"
-      sha256 "01d9e7c097b54b72a7c9f5fb226850fbd4b95f49429c323771c0769afec9e757"
+      url "https://github.com/ArmisSecurity/armis-cli/releases/download/v1.0.6/armis-cli-darwin-amd64.tar.gz"
+      sha256 "f6e2515858eaf5effa33b0c3d2735f6ed40a31c6488d50ab20f499ad46133684"
     end
 
     on_arm do
-      url "https://github.com/ArmisSecurity/armis-cli/releases/download/v1.0.5/armis-cli-darwin-arm64.tar.gz"
-      sha256 "c7ca18ce59b329e66ef65cc6a50a07c7a321a15dcb9371a79126557e3e122f5e"
+      url "https://github.com/ArmisSecurity/armis-cli/releases/download/v1.0.6/armis-cli-darwin-arm64.tar.gz"
+      sha256 "ee33f5965612508dff42022293b7a5c7fc4e410831513b90d9f4bae1ad5e5f2d"
     end
   end
 
   on_linux do
     on_intel do
-      url "https://github.com/ArmisSecurity/armis-cli/releases/download/v1.0.5/armis-cli-linux-amd64.tar.gz"
-      sha256 "2032981c0a6492bae7a6d6236a8d5d68b49ccdcc05bbcd2d175ec1ba20b609cf"
+      url "https://github.com/ArmisSecurity/armis-cli/releases/download/v1.0.6/armis-cli-linux-amd64.tar.gz"
+      sha256 "1bfc8a3e09f85932c4eb6268af93f58afa3114fac73cdeaeac0d02ae4a0c73ff"
     end
 
     on_arm do
-      url "https://github.com/ArmisSecurity/armis-cli/releases/download/v1.0.5/armis-cli-linux-arm64.tar.gz"
-      sha256 "43e657a50ef00d73e7096546b78ea7d76e166604b8a05cfc97e927c1397b87df"
+      url "https://github.com/ArmisSecurity/armis-cli/releases/download/v1.0.6/armis-cli-linux-arm64.tar.gz"
+      sha256 "d0046741610714c245f81ad8492d20ee623ca987acf361ff8bd8e87fed2da640"
     end
   end
 
