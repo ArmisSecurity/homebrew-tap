@@ -30,6 +30,11 @@ class ArmisCli < Formula
 
   def install
     bin.install "armis-cli"
+
+    # Shell completions (available from v1.0.8+)
+    bash_completion.install "completions/armis-cli.bash" => "armis-cli" if File.exist?("completions/armis-cli.bash")
+    zsh_completion.install "completions/_armis-cli" if File.exist?("completions/_armis-cli")
+    fish_completion.install "completions/armis-cli.fish" if File.exist?("completions/armis-cli.fish")
   end
 
   test do
